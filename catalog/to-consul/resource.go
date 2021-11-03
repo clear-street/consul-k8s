@@ -598,55 +598,23 @@ func (t *ServiceResource) registerServiceInstance(
 		return
 	}
 
-	seen := map[string]struct{}{}
-	for _, subset := range endpoints.Subsets {
-		// For ClusterIP services and if LoadBalancerEndpointsSync is true, we use the endpoint port instead
-		// of the service port because we're registering each endpoint
-		// as a separate service instance.
-		epPort := baseService.Port
-		if overridePortName != "" {
-			// If we're supposed to use a specific named port, find it.
-			for _, p := range subset.Ports {
-				if overridePortName == p.Name {
-					epPort = int(p.Port)
-					break
-				}
-			}
-		} else if overridePortNumber == 0 {
-			// Otherwise we'll just use the first port in the list
-			// (unless the port number was overridden by an annotation).
-			for _, p := range subset.Ports {
-				epPort = int(p.Port)
-				break
-			}
-		}
-		for _, subsetAddr := range subset.Addresses {
-			addr := subsetAddr.IP
-			if addr == "" && useHostname {
-				addr = subsetAddr.Hostname
-			}
-			if addr == "" {
-				continue
-			}
-
-			// Its not clear whether K8S guarantees ready addresses to
-			// be unique so we maintain a set to prevent duplicates just
-			// in case.
-			if _, ok := seen[addr]; ok {
-				continue
-			}
-			seen[addr] = struct{}{}
-
-			r := baseNode
-			rs := baseService
-			r.Service = &rs
-			r.Service.ID = serviceID(r.Service.Service, addr)
-			r.Service.Address = addr
-			r.Service.Port = epPort
-
-			t.consulMap[key] = append(t.consulMap[key], &r)
-		}
+	svc, ok := t.serviceMap[key]
+	if !ok {
+		return
 	}
+
+	if len(endpoints.Subsets) == 0 {
+		return
+	}
+
+	r := baseNode
+	rs := baseService
+	r.Service = &rs
+	r.Service.ID = serviceID(r.Service.Service, svc.Name)
+	r.Service.Address = svc.Name
+	r.Service.Port = 0
+
+	t.consulMap[key] = append(t.consulMap[key], &r)
 }
 
 // sync calls the Syncer.Sync function from the generated registrations.
