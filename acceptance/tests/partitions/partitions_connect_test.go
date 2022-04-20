@@ -24,7 +24,7 @@ const staticServerNamespace = "ns1"
 const staticClientNamespace = "ns2"
 
 // Test that Connect works in a default and ACLsAndAutoEncryptEnabled installations for X-Partition and in-partition networking.
-func TestPartitions(t *testing.T) {
+func TestPartitions_Connect(t *testing.T) {
 	env := suite.Environment()
 	cfg := suite.Config()
 

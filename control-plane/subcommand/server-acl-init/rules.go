@@ -268,21 +268,30 @@ func (c *Command) syncRules() (string, error) {
     policy = "write"
   }
 {{- if .EnableNamespaces }}
-operator = "write"
-acl = "write"
-{{- if .SyncEnableNSMirroring }}
-namespace_prefix "{{ .SyncNSMirroringPrefix }}" {
+{{- if .EnablePartitions }}
+partition "{{ .PartitionName }}" {
+  mesh = "write"
+  acl = "write"
 {{- else }}
-namespace "{{ .SyncConsulDestNS }}" {
+  operator = "write"
+  acl = "write"
+{{- end }}
+{{- if .SyncEnableNSMirroring }}
+  namespace_prefix "{{ .SyncNSMirroringPrefix }}" {
+{{- else }}
+  namespace "{{ .SyncConsulDestNS }}" {
 {{- end }}
 {{- end }}
-  node_prefix "" {
-    policy = "read"
-  }
-  service_prefix "" {
-    policy = "write"
-  }
+    node_prefix "" {
+      policy = "read"
+    }
+    service_prefix "" {
+      policy = "write"
+    }
 {{- if .EnableNamespaces }}
+  }
+{{- end }}
+{{- if .EnablePartitions }}
 }
 {{- end }}
 `
