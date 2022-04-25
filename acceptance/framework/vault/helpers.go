@@ -220,6 +220,42 @@ path %q {
 	return certificateIssuePath
 }
 
+// ConfigurePKICertificatesForConnectInjectWebhook configures roles in Vault so
+// that Consul Inject webhook TLS certificates can be issued by Vault.
+func ConfigurePKICertificatesForConnectInjectWebhook(t *testing.T,
+	vaultClient *vapi.Client, consulReleaseName, ns, datacenter string,
+	maxTTL string) string {
+	componentServiceAccountName := fmt.Sprintf("%s-consul-%s", consulReleaseName, "connect-injector")
+	allowedDomains := fmt.Sprintf("%s.consul,%s,%s.%s,%s.%s.svc", datacenter,
+		componentServiceAccountName, componentServiceAccountName, ns, componentServiceAccountName, ns)
+	params := map[string]interface{}{
+		"allowed_domains":    allowedDomains,
+		"allow_bare_domains": "true",
+		"allow_localhost":    "true",
+		"allow_subdomains":   "true",
+		"generate_lease":     "true",
+		"max_ttl":            maxTTL,
+	}
+
+	pkiRoleName := fmt.Sprintf("connect-webhook-cert-%s", datacenter)
+
+	_, err := vaultClient.Logical().Write(
+		fmt.Sprintf("pki/roles/%s", pkiRoleName), params)
+	require.NoError(t, err)
+
+	certificateIssuePath := fmt.Sprintf("pki/issue/%s", pkiRoleName)
+	serverTLSPolicy := fmt.Sprintf(`
+path %q {
+  capabilities = ["create", "update"]
+}`, certificateIssuePath)
+
+	// Create the server policy.
+	err = vaultClient.Sys().PutPolicy(pkiRoleName, serverTLSPolicy)
+	require.NoError(t, err)
+
+	return certificateIssuePath
+}
+
 // ConfigureACLTokenVaultSecret generates a token secret ID for a given name,
 // stores it in Vault as a secret and configures a policy to access it.
 func ConfigureACLTokenVaultSecret(t *testing.T, vaultClient *vapi.Client, tokenName string) string {
