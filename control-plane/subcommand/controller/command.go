@@ -28,7 +28,7 @@ type Command struct {
 	flagSet   *flag.FlagSet
 	httpFlags *flags.HTTPFlags
 
-	flagWebhookTLSCertDir    string
+	flagWebhooktlsCert.dir    string
 	flagEnableLeaderElection bool
 	flagEnableWebhooks       bool
 	flagDatacenter           string
@@ -76,7 +76,7 @@ func (c *Command) init() {
 	c.flagSet.StringVar(&c.flagCrossNSACLPolicy, "consul-cross-namespace-acl-policy", "",
 		"[Enterprise Only] Name of the ACL policy to attach to all created Consul namespaces to allow service "+
 			"discovery across Consul namespaces. Only necessary if ACLs are enabled.")
-	c.flagSet.StringVar(&c.flagWebhookTLSCertDir, "webhook-tls-cert-dir", "",
+	c.flagSet.StringVar(&c.flagWebhooktlsCert.dir, "webhook-tls-cert-dir", "",
 		"Directory that contains the TLS cert and key required for the webhook. The cert and key files must be named 'tls.crt' and 'tls.key' respectively.")
 	c.flagSet.BoolVar(&c.flagEnableWebhooks, "enable-webhooks", true,
 		"Enable webhooks. Disable when running locally since Kube API server won't be able to route to local server.")
@@ -101,7 +101,7 @@ func (c *Command) Run(args []string) int {
 		c.UI.Error("Invalid arguments: should have no non-flag arguments")
 		return 1
 	}
-	if c.flagEnableWebhooks && c.flagWebhookTLSCertDir == "" {
+	if c.flagEnableWebhooks && c.flagWebhooktlsCert.dir == "" {
 		c.UI.Error("Invalid arguments: -webhook-tls-cert-dir must be set")
 		return 1
 	}
@@ -251,7 +251,7 @@ func (c *Command) Run(args []string) int {
 	if c.flagEnableWebhooks {
 		// This webhook server sets up a Cert Watcher on the CertDir. This watches for file changes and updates the webhook certificates
 		// automatically when new certificates are available.
-		mgr.GetWebhookServer().CertDir = c.flagWebhookTLSCertDir
+		mgr.GetWebhookServer().CertDir = c.flagWebhooktlsCert.dir
 
 		// Note: The path here should be identical to the one on the kubebuilder
 		// annotation in each webhook file.
