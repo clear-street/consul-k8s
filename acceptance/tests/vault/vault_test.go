@@ -41,7 +41,7 @@ func TestVault(t *testing.T) {
 
 	bootstrapToken := vault.ConfigureACLTokenVaultSecret(t, vaultClient, "bootstrap")
 
-	serverPolicies := "gossip,connect-ca-dc1,server-cert-dc1,bootstrap-token"
+	serverPolicies := "gossip,connect-ca-dc1,server-cert-dc1,bootstrap-token,connect-webhook-cert-dc1"
 	if cfg.EnableEnterprise {
 		serverPolicies += ",license"
 	}
@@ -63,10 +63,10 @@ func TestVault(t *testing.T) {
 		"server.extraVolumes[0].name": vaultCASecret,
 		"server.extraVolumes[0].load": "false",
 
-		"connectInject.enabled":    "true",
-		"connectInject.replicas":   "1",
-		"connectInject.tlsCertDir": pathForConnectInjectWebookCerts,
-		"controller.enabled":       "true",
+		"connectInject.enabled":            "true",
+		"connectInject.replicas":           "1",
+		"connectInject.tlsCert.secretName": pathForConnectInjectWebookCerts,
+		"controller.enabled":               "true",
 
 		"global.secretsBackend.vault.enabled":              "true",
 		"global.secretsBackend.vault.consulServerRole":     "server",
